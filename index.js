@@ -72,7 +72,7 @@ app.use("/demo", demo)
 app.use("/api", api)
 
 
-frontend
+// frontend
 app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, './build/index.html'))
 })
