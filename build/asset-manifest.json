@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/static/css/main.2a8f7478.css",
+    "main.js": "/static/js/main.350e2196.js",
+    "static/js/787.a9d2e6b2.chunk.js": "/static/js/787.a9d2e6b2.chunk.js",
+    "static/media/error1.jpg": "/static/media/error1.a11b1f1b097ab8e61c94.jpg",
+    "static/media/attendance.png": "/static/media/attendance.7a1ad24a6d1f0a9fe7a5.png",
+    "static/media/activities.png": "/static/media/activities.98a2e17a74a9eae20b0b.png",
+    "static/media/logo.svg": "/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/index.html",
+    "main.2a8f7478.css.map": "/static/css/main.2a8f7478.css.map",
+    "main.350e2196.js.map": "/static/js/main.350e2196.js.map",
+    "787.a9d2e6b2.chunk.js.map": "/static/js/787.a9d2e6b2.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.2a8f7478.css",
+    "static/js/main.350e2196.js"
+  ]
+}
