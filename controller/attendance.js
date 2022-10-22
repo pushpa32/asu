@@ -246,7 +246,7 @@ export const getNotification = async (req, res) => {
         if (!req.body._id) throw new Error("Emp_id required")
 
         const data = await VerifyActivity.find({ emp_id: req.body._id, status: 0 })
-            // .populate({ path: "attendance_id", select: ['activity'] })
+            .populate({ path: "admin_id", select: ['name'] })
             .sort({ date: -1 })
 
         if (!data)
