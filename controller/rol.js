@@ -11,15 +11,10 @@ export const otpVerify = async (req, res) => {
   const out = {};
   try {
     if (!req.body.phone) throw new Error("Provide Phone Number!")
-    if (!req.body.otp) throw new Error("Provide Otp!")
 
-
-    const otps = await Otp.findOne({ phone: req.body.phone, otp: req.body.otp });
     const checkUser = await Employee.findOne({ phone: req.body.phone });
 
-    console.log(otps);
-
-    if (otps != null) {
+    if (checkUser) {
       const token = Jwt.sign({ user: checkUser }, 'PShady', { expiresIn: '30d' })
 
       res.cookie("access_token", token, {
@@ -33,7 +28,6 @@ export const otpVerify = async (req, res) => {
     res.send(err);
   }
 };
-
 
 //otp function
 async function otpFunction(emp_id, phone, otp) {
@@ -64,11 +58,11 @@ export const loginPhone = async (req, res) => {
 
     let returnedResult = 0;
     if (userCheck) {
-      const otp = Math.floor(Math.random() * (9999 - 1000 + 1) + 1000)
+      // const otp = Math.floor(Math.random() * (9999 - 1000 + 1) + 1000)
 
       if (userCheck.device_id != null) {
         if (userCheck.device_id === req.body.device_id) {
-          returnedResult = await otpFunction(userCheck.emp_id, req.body.phone, otp)
+          returnedResult = 1
         } else {
           const comparing = await Employee.findOne({ device_id: req.body.device_id });
           if (comparing != null) {
@@ -83,7 +77,7 @@ export const loginPhone = async (req, res) => {
               { emp_id: userCheck.emp_id },
               { $set: { device_id: req.body.device_id } }
             );
-            returnedResult = await otpFunction(userCheck.emp_id, req.body.phone, otp)
+            returnedResult = 1
           }
         }
       }
@@ -101,7 +95,7 @@ export const loginPhone = async (req, res) => {
             { emp_id: userCheck.emp_id },
             { $set: { device_id: req.body.device_id } }
           );
-          returnedResult = otpFunction(userCheck.emp_id, req.body.phone, otp)
+          returnedResult = 1
         }
       }
 
@@ -109,7 +103,6 @@ export const loginPhone = async (req, res) => {
       if (returnedResult === 1) {
         out.message = "success";
         out.error = false;
-        out.data = otp;
         out.email = userCheck.email;
       } else {
         out.message = "failed";

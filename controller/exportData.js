@@ -181,7 +181,6 @@ export const exportAttendanceByMonth = async (req, res) => {
 
         const results = await Employee.find({}, ["emp_id", "name"]).sort({ name: "asc" })
 
-
         const employees = []
         for (let i = 0; i < results.length; i++) {
             const emp = { ...results[i]._doc }

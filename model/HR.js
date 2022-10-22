@@ -11,7 +11,8 @@ const hrSchema = new mongoose.Schema
             dob: { type: String, required: true, default: "NA" },
             isHR: { type: Boolean, default: true },
             isAdmin: { type: Boolean, default: false },
-            isSuperAdmin: { type: Boolean, default: false }
+            isSuperAdmin: { type: Boolean, default: false },
+            isUser: { type: Boolean, default: false }
         }
     )
 hrSchema.index({ admin_id: 1, email: 1 }, { unique: true, unique: true })

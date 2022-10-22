@@ -9,7 +9,6 @@ import { AttendanceStatus } from "../model/AttendanceStatus.js";
 export const statusUpdate = async (req, res) => {
     const out = {}
     try {
-        console.log(req.body.response_status);
         if (!req.body.emp_id) throw new Error("Emp_id required")
         if (!req.body.attendance_date) throw new Error("Date In required!")
         // if (!req.body.response_status) throw new Error("Status In required!")
@@ -25,7 +24,6 @@ export const statusUpdate = async (req, res) => {
             }
         );
 
-
         out.message = "success"
         out.error = false
         out.data = await AttendanceStatus.updateOne(
@@ -36,12 +34,10 @@ export const statusUpdate = async (req, res) => {
                 }
             }
         );
-
     } catch (err) {
         out.message = err.message
         out.error = true
         out.data = null
-
     } finally {
         //setting the output
         res.send(out)
@@ -59,6 +55,7 @@ export const adminVerifyAttendanceStatus = async (req, res) => {
         const data = new AttendanceStatus({
             emp_id: req.body.emp_id,
             attendance_date: req.body.attendance_date,
+            is_admin_responded: 1,
             response_status: req.body.response_status,
         })
 
@@ -137,6 +134,7 @@ export const signInRegister = async (req, res) => {
 
         const attendance = new Attendance({
             emp_id: req.body.emp_id,
+            empID: req.body.empID,
             in_time: req.body.in_time,
             distance_in: req.body.distance_in,
             date: date,
@@ -217,8 +215,9 @@ export const getAttendance = async (req, res) => {
         if (!req.body.emp_id) throw new Error("Emp_id required")
         if (!req.body.date) throw new Error("Date In required!")
 
-        const data = await Attendance.find({ emp_id: req.body.emp_id, date: req.body.date })
+        const data = await Attendance.find({ emp_id: req.body.emp_id, date: req.body.date }).sort({ in_time: -1 })
         const attendanceStatus = await AttendanceStatus.findOne({ emp_id: req.body.emp_id, attendance_date: req.body.date })
+
 
         if (!data)
             throw Error("No records!")
@@ -281,36 +280,35 @@ export const deleteNotification = async (req, res) => {
         if (!data)
             throw Error("No records!")
 
-        if (req.body.agree_disagree_status === 1) { //agree, 
-            //verifyActivity status = 1 || AttendanceStatus === 1
-            await VerifyActivity.updateOne(
-                { emp_id: req.body._id, attendance_date: req.body.attendance_date, status: 0 },
-                {
-                    $set: {
-                        final_verify_status: 1,
-                        status: 1,
-                        agree_disagree_status: 1
-                    }
-                })
-            await AttendanceStatus.updateOne(
-                { emp_id: emp_check.emp_id, attendance_date: req.body.attendance_date, },
-                {
-                    $set: {
-                        response_status: 1,
-                    }
-                })
+        // if (req.body.agree_disagree_status === 1) { //agree, 
+        //verifyActivity status = 1 || AttendanceStatus === 1
+        await VerifyActivity.updateOne(
+            { emp_id: req.body._id, attendance_date: req.body.attendance_date, status: 0 },
+            {
+                $set: {
+                    emp_response: req.body.emp_response,
+                    status: 1,
+                }
+            })
+        await AttendanceStatus.updateOne(
+            { emp_id: emp_check.emp_id, attendance_date: req.body.attendance_date, },
+            {
+                $set: {
+                    response_status: 1,
+                }
+            })
 
-        }
-        if (req.body.agree_disagree_status === 2) { //disagree || then goes to admin panel for final present and absent
-            await VerifyActivity.updateOne(
-                { _id: data._id },
-                {
-                    $set: {
-                        emp_response: req.body.emp_response,
-                        status: 1 //user read it
-                    }
-                })
-        }
+        // }
+        // if (req.body.agree_disagree_status === 2) { //disagree || then goes to admin panel for final present and absent
+        //     await VerifyActivity.updateOne(
+        //         { _id: data._id },
+        //         {
+        //             $set: {
+        //                 emp_response: req.body.emp_response,
+        //                 status: 1 //user read it
+        //             }
+        //         })
+        // }
 
         out.message = "success"
         out.error = false
@@ -327,24 +325,26 @@ export const deleteNotification = async (req, res) => {
     }
 }
 
+// test for attendance Not in use
 // Attendance User (Admin)
 export const attendanceByDate = async (req, res) => {
     const out = {}
     try {
         if (!req.body.date) throw new Error("Date In required!")
-
         const datas = await Attendance.distinct("emp_id", { date: req.body.date })
 
         if (!datas)
             throw Error("No records!")
 
-
         let hr = []
         let min = []
         let data = []
         for (const index in datas) {
-            const result = await Employee.findOne({ emp_id: datas[index] })
-            const attendanceStatus = await AttendanceStatus.findOne({ emp_id: datas[index], attendance_date: req.body.date })
+            const result = await Attendance.findOne({ emp_id: datas[index], date: req.body.date })
+                .populate({ path: "empID", select: ['name', 'email', 'phone', "_id"] })
+            let attendanceStatus = await AttendanceStatus.findOne({ emp_id: datas[index], attendance_date: req.body.date })
+
+            if (!attendanceStatus) attendanceStatus = null
 
             const attData = await Attendance.find({ emp_id: datas[index], date: req.body.date }, ["in_time", "out_time"])
             for (let i = 0; i < attData.length; i++) {
@@ -387,6 +387,66 @@ export const attendanceByDate = async (req, res) => {
     }
 }
 
+// Attendance User (Admin)
+// export const attendanceByDate = async (req, res) => {
+//     const out = {}
+//     try {
+//         if (!req.body.date) throw new Error("Date In required!")
+
+//         const datas = await Attendance.distinct("emp_id", { date: req.body.date })
+
+//         if (!datas)
+//             throw Error("No records!")
+
+
+//         let hr = []
+//         let min = []
+//         let data = []
+//         for (const index in datas) {
+//             const result = await Employee.findOne({ emp_id: datas[index] })
+//             const attendanceStatus = await AttendanceStatus.findOne({ emp_id: datas[index], attendance_date: req.body.date })
+
+//             const attData = await Attendance.find({ emp_id: datas[index], date: req.body.date }, ["in_time", "out_time"])
+//             for (let i = 0; i < attData.length; i++) {
+
+//                 const startTime = moment(attData[i].in_time, 'HH:mm:ss a');
+//                 const endTime = moment(attData[i].out_time, 'HH:mm:ss a');
+
+//                 const duration = moment.duration(endTime.diff(startTime));
+
+//                 const hours = parseInt(duration.asHours());
+//                 const minutes = parseInt(duration.asMinutes()) % 60;
+//                 hr.push(hours)
+//                 min.push(minutes)
+//             }
+//             let totalHrs = hr.reduce((a, b) => a + b, 0);
+//             let totalMins = min.reduce((a, b) => a + b, 0);
+
+//             while (totalMins >= 60) {
+//                 totalHrs += 1
+//                 totalMins -= 60
+//             }
+
+//             // data.push({ ...result._doc, totalTime: totalHrs + ' hour and ' + totalMins + ' minutes.' })
+//             data.push({ ...result._doc, totalhr: totalHrs, totalMn: totalMins, attendanceStatus: attendanceStatus })
+//             // data.push({ totalTime: totalHrs + ' hour and ' + totalMins + ' minutes.' })
+//         }
+
+//         out.message = "success"
+//         out.error = false
+//         out.data = data
+
+//     } catch (err) {
+//         out.message = err.message
+//         out.error = true
+//         out.data = null
+
+//     } finally {
+//         //setting the output
+//         res.send(out)
+//     }
+// }
+
 // Attendance User (Admin) // all attendance for a particular day 
 export const getAttendanceByDateAndId = async (req, res) => {
     const out = {}
@@ -418,9 +478,7 @@ export const getAttendanceByDateAndId = async (req, res) => {
 export const verifyActivities = async (req, res) => {
     const out = {}
     try {
-
-        if (!req.body.emp_id) throw Error("No Attendance Id provided!")
-        console.log(req.body.emp_id);
+        if (!req.body.emp_id) throw Error("Emp ID Id provided!")
         if (!req.body.admin_id) throw Error("No Admin Id provided!")
         if (!req.body.message) throw Error("Message is not provided!")
 
@@ -437,7 +495,7 @@ export const verifyActivities = async (req, res) => {
         const empCheck = await Employee.findOne({ _id: req.body.emp_id })
 
         const verify = new VerifyActivity({
-            emp_id: req.body.emp_id,
+            emp_id: empCheck._id,
             // attendance_id: req.body.attendance_id,
             admin_id: req.body.admin_id,
             attendance_date: req.body.attendance_date,
@@ -449,6 +507,7 @@ export const verifyActivities = async (req, res) => {
         const data = new AttendanceStatus({
             emp_id: empCheck.emp_id,
             attendance_date: req.body.attendance_date,
+            is_admin_responded: 1,
             response_status: req.body.response_status,
         })
         await data.save()
